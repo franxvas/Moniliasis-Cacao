@@ -13,7 +13,7 @@
     
     <!-- ✅ UNA SOLA etiqueta <application> -->
     <application
-        android:label="MoniliaScan"
+        android:label="CacaoScan"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         

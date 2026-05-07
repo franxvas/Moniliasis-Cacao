@@ -1,4 +1,4 @@
-package com.example.amgeca
+package com.example.cacaoscan
 
 import io.flutter.embedding.android.FlutterActivity
 

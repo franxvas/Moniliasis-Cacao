@@ -1,8 +1,8 @@
 import 'dart:typed_data';
 
-import 'package:amgeca/providers/auth_provider.dart';
-import 'package:amgeca/services/diagnosis_service.dart';
-import 'package:amgeca/services/image_service.dart';
+import 'package:cacao_scan/providers/auth_provider.dart';
+import 'package:cacao_scan/services/diagnosis_service.dart';
+import 'package:cacao_scan/services/image_service.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -155,7 +155,7 @@ class _DiagnosticoPageState extends State<DiagnosticoPage> {
                   const Text('Recomendado online: Confidence 0.25 e IoU 0.45.'),
                 ] else ...[
                   const Text(
-                    'En offline puedes ajustar Confidence. El IoU no se puede mover desde la app porque el TFLite ya trae el postprocesamiento/NMS dentro del modelo.',
+                    'En offline puedes ajustar Confidence. El IoU (Intersección sobre Union) no se puede mover desde la app porque el TFLite ya trae el postprocesamiento/NMS dentro del modelo.',
                   ),
                   const SizedBox(height: 12),
                   const Text('Recomendado offline: Confidence 0.25.'),
@@ -301,7 +301,14 @@ class _DiagnosticoPageState extends State<DiagnosticoPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Detección de moniliasis en cacao'),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Image.asset('assets/brand/cacao_mark.png', height: 32),
+            const SizedBox(width: 10),
+            const Text('CacaoScan'),
+          ],
+        ),
         actions: [
           IconButton(
             tooltip: 'Cerrar sesión',
@@ -343,8 +350,8 @@ class _DiagnosticoPageState extends State<DiagnosticoPage> {
                                     ? Icons.hourglass_bottom
                                     : Icons.check_circle,
                                 color: _isModelLoading
-                                    ? Colors.orange
-                                    : Colors.green,
+                                    ? const Color(0xFFD7902F)
+                                    : const Color(0xFF6C7F35),
                               ),
                               const SizedBox(width: 8),
                               Text(
@@ -383,7 +390,7 @@ class _DiagnosticoPageState extends State<DiagnosticoPage> {
                               _useOnlineModel
                                   ? Icons.cloud_outlined
                                   : Icons.offline_bolt_outlined,
-                              color: const Color(0xFF2E7D32),
+                              color: const Color(0xFF6F3D20),
                             ),
                           ),
                         ],
@@ -397,7 +404,7 @@ class _DiagnosticoPageState extends State<DiagnosticoPage> {
                     clipBehavior: Clip.antiAlias,
                     child: Container(
                       height: 320,
-                      color: const Color(0xFFF0F4EB),
+                      color: const Color(0xFFF1D9AB),
                       child: _selectedImage == null
                           ? const Center(
                               child: Column(

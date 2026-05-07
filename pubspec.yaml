@@ -1,4 +1,4 @@
-name: amgeca
+name: cacao_scan
 description: Aplicación mínima para login y detección de moniliasis en cacao.
 publish_to: 'none'
 version: 0.1.0
@@ -29,5 +29,7 @@ flutter:
   uses-material-design: true
 
   assets:
+    - assets/brand/cacao_logo.png
+    - assets/brand/cacao_mark.png
     - assets/modelo_cacao_monilia_ssd.tflite
     - assets/labels_cacao_monilia_ssd.txt

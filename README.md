@@ -1,3 +1,3 @@
-# amgeca
+# CacaoScan
 
 A new Flutter project.

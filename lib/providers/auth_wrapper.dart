@@ -1,6 +1,6 @@
-import 'package:amgeca/View/auth/login_page.dart';
-import 'package:amgeca/View/diagnostico_page.dart';
-import 'package:amgeca/providers/auth_provider.dart';
+import 'package:cacao_scan/View/auth/login_page.dart';
+import 'package:cacao_scan/View/diagnostico_page.dart';
+import 'package:cacao_scan/providers/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 

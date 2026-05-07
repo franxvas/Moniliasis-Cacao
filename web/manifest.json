@@ -1,11 +1,11 @@
 {
-    "name": "amgeca",
-    "short_name": "amgeca",
+    "name": "CacaoScan",
+    "short_name": "CacaoScan",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#F8EBD2",
+    "theme_color": "#4A2817",
+    "description": "Detección de moniliasis y enfermedades del cacao.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
