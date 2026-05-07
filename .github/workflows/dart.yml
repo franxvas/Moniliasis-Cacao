@@ -1,0 +1,58 @@
+name: iOS-ipa-build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    name: 🎉 iOS Build
+    runs-on: macos-latest
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🔍 Show Commit Info
+        run: |
+          echo "Branch: $(git rev-parse --abbrev-ref HEAD)"
+          echo "Commit: $(git rev-parse HEAD)"
+          git log -1 --oneline
+      - name: 🐦 Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          architecture: x64
+
+      - name: 🧹 Flutter Clean
+        run: flutter clean
+
+      - name: 📦 Flutter Pub Get
+        run: flutter pub get
+
+      - name: 🔎 Verify GoogleService-Info.plist
+        run: |
+          ls -la ios/Runner || true
+          find . -maxdepth 5 -name "GoogleService-Info.plist" -print || true
+          test -f ios/Runner/GoogleService-Info.plist && echo "✅ plist exists" || (echo "❌ plist missing" && exit 1)
+      - name: 📦 Install CocoaPods
+        run: |
+          cd ios
+          pod install --repo-update
+      - name: 🏗️ Build iOS (no codesign)
+        run: |
+          flutter build ios --release --no-codesign \
+            --build-number $GITHUB_RUN_NUMBER
+      - name: 📦 Create IPA
+        run: |
+          cd build/ios/iphoneos
+          mkdir -p Payload
+          mv Runner.app Payload/
+          zip -qq -r -9 FlutterIpaExport.ipa Payload
+          ls -la FlutterIpaExport.ipa
+      - name: ⬆️ Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: FlutterIpaExport
+          path: build/ios/iphoneos/FlutterIpaExport.ipa
+          if-no-files-found: error
+          retention-days: 7
