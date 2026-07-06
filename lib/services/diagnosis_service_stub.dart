@@ -1,7 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:js_interop';
+import 'dart:js_interop_unsafe';
 import 'dart:typed_data';
 
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:http/http.dart' as http;
 
 enum DiagnosisMode { offline, online }
@@ -48,16 +51,43 @@ class DiagnosisService {
   static const defaultConfidenceThreshold = 0.25;
   static const defaultIouThreshold = 0.45;
 
+  static const _offlineModelPath = 'assets/modelo_cacao_monilia_ssd.tflite';
+  static const _offlineLabelsPath = 'assets/labels_cacao_monilia_ssd.txt';
   static final Uri _spaceBaseUri = Uri.https(
     'bdarquea-cocoa-diseases-localization.hf.space',
   );
   static const _timeout = Duration(seconds: 90);
 
   final http.Client _client;
+  Uint8List? _offlineModelBytes;
+  List<String> _offlineLabels = const [];
 
   DiagnosisService({http.Client? client}) : _client = client ?? http.Client();
 
-  Future<void> load() async {}
+  Future<void> load() async {
+    if (_offlineModelBytes != null && _offlineLabels.isNotEmpty) {
+      return;
+    }
+
+    final modelData = await rootBundle.load(_offlineModelPath);
+    _offlineModelBytes = modelData.buffer.asUint8List(
+      modelData.offsetInBytes,
+      modelData.lengthInBytes,
+    );
+
+    final labelsData = await rootBundle.loadString(_offlineLabelsPath);
+    _offlineLabels = labelsData
+        .split('\n')
+        .map((label) => label.replaceFirst(RegExp(r'^\d+\s*'), '').trim())
+        .where((label) => label.isNotEmpty)
+        .toList(growable: false);
+
+    if (_offlineLabels.isEmpty) {
+      throw Exception('No se encontraron etiquetas para el modelo offline.');
+    }
+
+    await _loadWebTflite();
+  }
 
   Future<DiagnosisResult> analyze(
     Uint8List imageBytes, {
@@ -77,9 +107,88 @@ class DiagnosisService {
       );
     }
 
-    throw Exception(
-      'El modelo offline TFLite no esta disponible en Flutter Web. Prueba en Android, iOS o escritorio, o activa el modelo online.',
+    return _analyzeOffline(
+      imageBytes,
+      confidenceThreshold: confidenceThreshold,
     );
+  }
+
+  Future<void> _loadWebTflite() async {
+    final runner = _webTfliteRunner;
+    if (runner == null) {
+      throw Exception(
+        'No se encontro el cargador TFLite web. Revisa web/index.html.',
+      );
+    }
+
+    await runner
+        .callMethod<JSPromise<JSAny?>>('load'.toJS, _offlineModelBytes!.toJS)
+        .toDart;
+  }
+
+  Future<DiagnosisResult> _analyzeOffline(
+    Uint8List imageBytes, {
+    required double confidenceThreshold,
+  }) async {
+    await load();
+
+    final runner = _webTfliteRunner;
+    if (runner == null) {
+      throw Exception(
+        'No se encontro el cargador TFLite web. Revisa web/index.html.',
+      );
+    }
+
+    final rawDetections = await runner
+        .callMethod<JSPromise<JSAny?>>(
+          'analyze'.toJS,
+          _offlineModelBytes!.toJS,
+          imageBytes.toJS,
+          _offlineLabels.jsify(),
+          confidenceThreshold.toJS,
+        )
+        .toDart;
+
+    final parsedDetections = rawDetections.dartify();
+    final detections = parsedDetections is List
+        ? parsedDetections
+              .whereType<Map<Object?, Object?>>()
+              .map(
+                (detection) => DetectionBox(
+                  label: detection['label'] as String? ?? 'sin etiqueta',
+                  confidence:
+                      (detection['confidence'] as num?)?.toDouble() ?? 0,
+                  yMin: (detection['yMin'] as num?)?.toDouble() ?? 0,
+                  xMin: (detection['xMin'] as num?)?.toDouble() ?? 0,
+                  yMax: (detection['yMax'] as num?)?.toDouble() ?? 0,
+                  xMax: (detection['xMax'] as num?)?.toDouble() ?? 0,
+                ),
+              )
+              .toList(growable: false)
+        : const <DetectionBox>[];
+
+    final bestDetection = detections.isEmpty ? null : detections.first;
+    final moniliaDetections = detections
+        .where((detection) => detection.label.toLowerCase().contains('monilia'))
+        .toList(growable: false);
+    final hasMonilia = moniliaDetections.isNotEmpty;
+
+    return DiagnosisResult(
+      mode: DiagnosisMode.offline,
+      rawLabel: detections.isEmpty
+          ? 'Modelo offline SSD web: no hubo detecciones sobre el umbral.'
+          : 'Modelo offline SSD web: ${detections.map((d) => '${d.label} ${(d.confidence * 100).toStringAsFixed(1)}%').join(', ')}.',
+      confidence: hasMonilia
+          ? moniliaDetections.first.confidence
+          : bestDetection?.confidence,
+      moniliasisDetected: hasMonilia,
+      detections: detections,
+    );
+  }
+
+  JSObject? get _webTfliteRunner {
+    final runner = globalContext.getProperty<JSAny?>('CacaoScanTflite'.toJS);
+    return runner == null ? null : runner as JSObject;
   }
 
   Future<DiagnosisResult> _analyzeOnline(

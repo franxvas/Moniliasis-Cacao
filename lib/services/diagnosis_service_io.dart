@@ -109,7 +109,7 @@ class DiagnosisService {
 
   Future<DiagnosisResult> _analyzeOffline(
     Uint8List imageBytes, {
-    required double confidenceThreshold,
+    required double confidenceThreshold, // hacer commit frn
   }) async {
     await load();
 
