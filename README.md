@@ -2,33 +2,33 @@
 
 [![Flutter](https://img.shields.io/badge/Flutter-3.35%2B-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
 [![Dart](https://img.shields.io/badge/Dart-3.9%2B-0175C2?logo=dart&logoColor=white)](https://dart.dev)
-[![TensorFlow Lite](https://img.shields.io/badge/TensorFlow%20Lite-local%20SSD-FF6F00?logo=tensorflow&logoColor=white)](https://www.tensorflow.org/lite)
-[![State Management](https://img.shields.io/badge/State-Provider-6F3D20)](https://pub.dev/packages/provider)
-[![License](https://img.shields.io/badge/License-not%20specified-lightgrey)](#license)
+[![TensorFlow Lite](https://img.shields.io/badge/TensorFlow%20Lite-SSD%20local-FF6F00?logo=tensorflow&logoColor=white)](https://www.tensorflow.org/lite)
+[![Estado](https://img.shields.io/badge/Estado-Provider-6F3D20)](https://pub.dev/packages/provider)
+[![Licencia](https://img.shields.io/badge/Licencia-no%20especificada-lightgrey)](#licencia)
 
-CacaoScan is a Flutter application for assisted visual diagnosis of cacao fruit diseases, focused on moniliasis detection. It combines a local TensorFlow Lite SSD model for offline inference with an optional online Hugging Face Space flow that returns an annotated prediction image.
+CacaoScan es una aplicación Flutter para diagnóstico visual asistido de enfermedades en frutos de cacao, con foco en la detección de moniliasis. Combina un modelo SSD local en TensorFlow Lite para inferencia offline con un flujo online opcional basado en un Space de Hugging Face que devuelve una imagen anotada con predicciones.
 
-The project exists to make cacao image analysis available from a simple mobile-first interface: users sign in, capture or select an image, tune detection sensitivity, and run diagnosis using either the bundled model or the remote model endpoint.
+El proyecto existe para acercar el análisis de imágenes de cacao a una interfaz móvil simple: el usuario inicia sesión, toma o selecciona una imagen, ajusta la sensibilidad del modelo y ejecuta el diagnóstico con el modelo incluido en la app o con el endpoint remoto.
 
-## Features
+## Funcionalidades
 
-| Area | Implemented behavior |
+| Área | Comportamiento implementado |
 | --- | --- |
-| Authentication | Local login flow with form validation, password visibility toggle, error feedback, session persistence, and logout. |
-| Seed user | A default administrator account is inserted into the local SQLite database on supported native platforms. |
-| Session restore | `shared_preferences` stores authentication state and user metadata between launches. |
-| Image input | Users can take a photo with the camera or choose an image from the gallery through `image_picker`. |
-| Image optimization | Picked images are constrained to `1280x1280` with JPEG quality `85` before analysis. |
-| Offline diagnosis | Loads `assets/modelo_cacao_monilia_ssd.tflite` and runs local SSD inference. |
-| Web offline diagnosis | Uses `tfjs-tflite` through `web/tflite_web_runner.js` when running on Flutter Web. |
-| Online diagnosis | Uploads the selected image to a Hugging Face Space and downloads the annotated result image. |
-| Sensitivity controls | Confidence threshold is adjustable for both modes; IoU is adjustable for the online flow only. |
-| Results | Shows detection status, confidence, raw model summary, offline detection list, and online annotated image bytes when available. |
-| Responsive UI | Login and diagnosis screens are centered with max-width constraints for phone, tablet, desktop, and web layouts. |
+| Autenticación | Flujo de login local con validación de formulario, visibilidad de contraseña, mensajes de error, persistencia de sesión y cierre de sesión. |
+| Usuario inicial | Se inserta una cuenta administradora por defecto en SQLite en plataformas nativas compatibles. |
+| Restauración de sesión | `shared_preferences` guarda estado de autenticación y metadatos básicos del usuario entre ejecuciones. |
+| Entrada de imágenes | El usuario puede tomar una foto con la cámara o seleccionar una imagen desde la galería mediante `image_picker`. |
+| Optimización de imágenes | Las imágenes seleccionadas se limitan a `1280x1280` con calidad JPEG `85` antes del análisis. |
+| Diagnóstico offline | Carga `assets/modelo_cacao_monilia_ssd.tflite` y ejecuta inferencia SSD local. |
+| Diagnóstico offline en web | Usa `tfjs-tflite` mediante `web/tflite_web_runner.js` cuando la app corre en Flutter Web. |
+| Diagnóstico online | Sube la imagen seleccionada a un Space de Hugging Face y descarga la imagen anotada resultante. |
+| Controles de sensibilidad | El umbral de confianza se puede ajustar en ambos modos; IoU solo se puede ajustar en el flujo online. |
+| Resultados | Muestra estado de detección, confianza, resumen bruto del modelo, lista de detecciones offline e imagen anotada online cuando está disponible. |
+| UI adaptable | Las pantallas de login y diagnóstico usan restricciones de ancho para funcionar en teléfono, tablet, escritorio y web. |
 
-## Architecture
+## Arquitectura
 
-CacaoScan follows a compact layered Flutter structure:
+CacaoScan sigue una estructura Flutter compacta por capas:
 
 ```mermaid
 flowchart TD
@@ -44,50 +44,50 @@ flowchart TD
   Diagnosis --> ImageService["ImageService"]
   Diagnosis --> DiagnosisService["DiagnosisService"]
 
-  ImageService --> Camera["Camera"]
-  ImageService --> Gallery["Gallery"]
+  ImageService --> Camera["Cámara"]
+  ImageService --> Gallery["Galería"]
 
-  DiagnosisService --> OfflineNative["TFLite native interpreter"]
-  DiagnosisService --> OfflineWeb["tfjs-tflite web runner"]
-  DiagnosisService --> OnlineHF["Hugging Face Space API"]
+  DiagnosisService --> OfflineNative["Intérprete TFLite nativo"]
+  DiagnosisService --> OfflineWeb["Runner web tfjs-tflite"]
+  DiagnosisService --> OnlineHF["API de Hugging Face Space"]
 
-  OfflineNative --> Assets["TFLite model + labels"]
+  OfflineNative --> Assets["Modelo TFLite + etiquetas"]
   OfflineWeb --> Assets
-  OnlineHF --> Annotated["Annotated image"]
+  OnlineHF --> Annotated["Imagen anotada"]
 ```
 
-### Application Layers
+### Capas de la aplicación
 
-| Layer | Files | Responsibility |
+| Capa | Archivos | Responsabilidad |
 | --- | --- | --- |
-| App bootstrap | `lib/main.dart` | Initializes Flutter, registers `AuthProvider`, configures Material 3 theming, and starts `AuthWrapper`. |
-| Routing gate | `lib/providers/auth_wrapper.dart` | Restores persisted auth state and selects either login or diagnosis UI. |
-| State management | `lib/providers/auth_provider.dart` | Owns authentication state, user metadata, login/logout actions, and session persistence. |
-| Data access | `lib/Data/basedato_helper*.dart` | Provides local credential lookup using SQLite on native platforms and a stub fallback elsewhere. |
-| Services | `lib/services/*.dart` | Encapsulates image picking, local inference, web inference, remote inference, and result models. |
-| Views | `lib/View/**/*.dart` | Contains the login and diagnosis screens. |
-| Assets | `assets/` | Stores brand images, labels, and the bundled TensorFlow Lite model. |
-| Platform shells | `android/`, `ios/`, `web/`, `linux/`, `macos/`, `windows/` | Flutter platform runners and native build configuration. |
+| Arranque de app | `lib/main.dart` | Inicializa Flutter, registra `AuthProvider`, configura el tema Material 3 e inicia `AuthWrapper`. |
+| Puerta de navegación | `lib/providers/auth_wrapper.dart` | Restaura el estado de sesión persistido y decide entre la UI de login o diagnóstico. |
+| Manejo de estado | `lib/providers/auth_provider.dart` | Administra estado de autenticación, datos del usuario, login/logout y persistencia de sesión. |
+| Acceso a datos | `lib/Data/basedato_helper*.dart` | Provee validación local de credenciales con SQLite en plataformas nativas y un fallback stub en otros entornos. |
+| Servicios | `lib/services/*.dart` | Encapsula selección de imágenes, inferencia local, inferencia web, inferencia remota y modelos de resultado. |
+| Vistas | `lib/View/**/*.dart` | Contiene las pantallas de login y diagnóstico. |
+| Assets | `assets/` | Almacena imágenes de marca, etiquetas y el modelo TensorFlow Lite incluido. |
+| Runners de plataforma | `android/`, `ios/`, `web/`, `linux/`, `macos/`, `windows/` | Configuración nativa y runners generados por Flutter. |
 
-## Technology Stack
+## Stack tecnológico
 
-| Technology | Usage |
+| Tecnología | Uso |
 | --- | --- |
-| Flutter | Cross-platform UI framework. |
-| Dart | Application language; SDK constraint is `^3.9.2`. |
-| Provider | `ChangeNotifier`-based auth state management. |
-| TensorFlow Lite | Native offline model execution through a vendored `tflite_flutter` package. |
-| TensorFlow.js TFLite | Browser-side TFLite execution for Flutter Web via CDN scripts and `web/tflite_web_runner.js`. |
-| SQLite / sqflite | Native local user table and credential lookup. |
-| shared_preferences | Persisted login state and basic user metadata. |
-| image_picker | Camera and gallery access. |
-| image | Native image decoding/resizing before TFLite inference. |
-| http | Hugging Face Space upload, prediction polling, and annotated image download. |
-| crypto | SHA-256 hashing for stored local password hashes. |
+| Flutter | Framework multiplataforma para la interfaz. |
+| Dart | Lenguaje de la aplicación; la restricción del SDK es `^3.9.2`. |
+| Provider | Manejo de estado de autenticación basado en `ChangeNotifier`. |
+| TensorFlow Lite | Ejecución nativa del modelo offline mediante el paquete vendorizado `tflite_flutter`. |
+| TensorFlow.js TFLite | Ejecución TFLite en navegador para Flutter Web mediante scripts CDN y `web/tflite_web_runner.js`. |
+| SQLite / sqflite | Tabla local de usuarios y validación de credenciales en plataformas nativas. |
+| shared_preferences | Persistencia de sesión y metadatos básicos de usuario. |
+| image_picker | Acceso a cámara y galería. |
+| image | Decodificación y redimensionamiento nativo antes de la inferencia TFLite. |
+| http | Subida a Hugging Face Space, polling de predicción y descarga de imagen anotada. |
+| crypto | Hash SHA-256 para contraseñas locales almacenadas. |
 
-Firebase is not used by the application code or declared dependencies. The current GitHub Actions workflow checks for `ios/Runner/GoogleService-Info.plist`, but no Firebase package is configured in `pubspec.yaml`.
+Firebase no está usado en el código de la aplicación ni declarado en las dependencias. El workflow actual de GitHub Actions verifica `ios/Runner/GoogleService-Info.plist`, pero no hay ningún paquete Firebase configurado en `pubspec.yaml`.
 
-## Project Structure
+## Estructura del proyecto
 
 ```text
 .
@@ -130,29 +130,29 @@ Firebase is not used by the application code or declared dependencies. The curre
 `-- analysis_options.yaml
 ```
 
-## Screens
+## Pantallas
 
-| Screen | File | Responsibility |
+| Pantalla | Archivo | Responsabilidad |
 | --- | --- | --- |
-| Login | `lib/View/auth/login_page.dart` | Displays the CacaoScan logo, collects email/password, validates inputs, invokes `AuthProvider.login`, and renders authentication errors. |
-| Auth loading gate | `lib/providers/auth_wrapper.dart` | Shows a loading indicator while persisted session data is restored. |
-| Diagnosis | `lib/View/diagnostico_page.dart` | Displays the authenticated user greeting, model mode switch, threshold controls, image preview, image source actions, analyze action, errors, and diagnosis results. |
+| Login | `lib/View/auth/login_page.dart` | Muestra el logo de CacaoScan, solicita correo y contraseña, valida campos, ejecuta `AuthProvider.login` y renderiza errores de autenticación. |
+| Verificación de sesión | `lib/providers/auth_wrapper.dart` | Muestra un indicador de carga mientras se restaura la sesión persistida. |
+| Diagnóstico | `lib/View/diagnostico_page.dart` | Muestra saludo del usuario, selector de modo, controles de umbral, vista previa de imagen, acciones de imagen, botón de análisis, errores y resultados. |
 
-Navigation is intentionally minimal: the app does not define named routes. `AuthWrapper` switches the root view according to `AuthProvider.isAuthenticated`.
+La navegación es intencionalmente mínima: la app no define rutas con nombre. `AuthWrapper` cambia la vista raíz según `AuthProvider.isAuthenticated`.
 
-## Installation
+## Instalación
 
-### Requirements
+### Requisitos
 
-| Tool | Required by project |
+| Herramienta | Requerimiento del proyecto |
 | --- | --- |
-| Flutter | `>=3.35.0` according to `pubspec.lock`; this repository was inspected with Flutter `3.38.9`. |
+| Flutter | `>=3.35.0` según `pubspec.lock`; este repositorio fue inspeccionado con Flutter `3.38.9`. |
 | Dart | `>=3.9.2 <4.0.0`. |
-| Android Studio / SDK | Required for Android builds. |
-| Xcode + CocoaPods | Required for iOS builds; `ios/Podfile` targets iOS `13.0`. |
-| Network access | Required for `flutter pub get`, web TFLite CDN scripts, and online Hugging Face diagnosis. |
+| Android Studio / SDK | Necesario para builds Android. |
+| Xcode + CocoaPods | Necesario para builds iOS; `ios/Podfile` usa iOS mínimo `13.0`. |
+| Acceso a red | Necesario para `flutter pub get`, scripts CDN de TFLite web y diagnóstico online con Hugging Face. |
 
-### Setup
+### Configuración
 
 ```bash
 git clone <repository-url>
@@ -160,9 +160,9 @@ cd Moniliasis-Cacao
 flutter pub get
 ```
 
-The TensorFlow Lite Flutter plugin is resolved from the local path `third_party/tflite_flutter`, so keep that directory with the repository.
+El plugin Flutter de TensorFlow Lite se resuelve desde la ruta local `third_party/tflite_flutter`, por lo que ese directorio debe mantenerse dentro del repositorio.
 
-## Running
+## Ejecución
 
 ### Android
 
@@ -170,7 +170,7 @@ The TensorFlow Lite Flutter plugin is resolved from the local path `third_party/
 flutter run -d android
 ```
 
-Android permissions are declared for camera, internet, legacy external storage, and modern image media access.
+Android declara permisos para cámara, internet, almacenamiento externo legacy y acceso moderno a imágenes.
 
 ### iOS
 
@@ -181,7 +181,7 @@ cd ..
 flutter run -d ios
 ```
 
-The iOS configuration includes camera and photo library usage descriptions. The app display name is `CacaoScan`.
+La configuración iOS incluye descripciones de uso para cámara y biblioteca de fotos. El nombre visible de la app es `CacaoScan`.
 
 ### Web
 
@@ -189,36 +189,36 @@ The iOS configuration includes camera and photo library usage descriptions. The 
 flutter run -d chrome
 ```
 
-Flutter Web uses `web/index.html` to load TensorFlow.js Core, the CPU backend, `@tensorflow/tfjs-tflite`, and the project-specific `tflite_web_runner.js`. Offline web inference requires those CDN scripts to load successfully.
+Flutter Web usa `web/index.html` para cargar TensorFlow.js Core, el backend CPU, `@tensorflow/tfjs-tflite` y el runner propio `tflite_web_runner.js`. La inferencia offline en web requiere que esos scripts CDN carguen correctamente.
 
-### Desktop
+### Escritorio
 
-Flutter platform folders exist for Linux, macOS, and Windows. The primary application code is cross-platform, but SQLite and TFLite behavior depends on plugin support for each target.
+El repositorio incluye carpetas de plataforma para Linux, macOS y Windows. El código principal de la aplicación es multiplataforma, pero el comportamiento de SQLite y TFLite depende del soporte de plugins para cada destino.
 
-## Development Login
+## Login de desarrollo
 
-The current code seeds or exposes one default account:
+El código actual inserta o expone una cuenta por defecto:
 
-| Field | Value |
+| Campo | Valor |
 | --- | --- |
-| Email | `admin@gmail.com` |
-| Password | `admin123` |
-| Name | `Administrador` |
+| Correo | `admin@gmail.com` |
+| Contraseña | `admin123` |
+| Nombre | `Administrador` |
 
-On native platforms, the password is stored as a SHA-256 hash in SQLite. On non-IO builds, the stub helper validates the same credentials directly.
+En plataformas nativas, la contraseña se almacena como hash SHA-256 en SQLite. En builds no IO, el helper stub valida directamente las mismas credenciales.
 
-Change this before shipping any production build.
+Cambia estas credenciales antes de publicar cualquier build de producción.
 
 ## TensorFlow Lite
 
 ### Assets
 
-| Asset | Purpose |
+| Asset | Propósito |
 | --- | --- |
-| `assets/modelo_cacao_monilia_ssd.tflite` | Bundled offline SSD object detection model. |
-| `assets/labels_cacao_monilia_ssd.txt` | Label map used by the offline model. |
+| `assets/modelo_cacao_monilia_ssd.tflite` | Modelo SSD offline incluido en la aplicación. |
+| `assets/labels_cacao_monilia_ssd.txt` | Mapa de etiquetas usado por el modelo offline. |
 
-Current labels:
+Etiquetas actuales:
 
 ```text
 0 healthy
@@ -226,70 +226,70 @@ Current labels:
 2 phytophthora
 ```
 
-### Native Offline Pipeline
+### Pipeline offline nativo
 
-`DiagnosisService` uses conditional exports:
+`DiagnosisService` usa exports condicionales:
 
-- `lib/services/diagnosis_service.dart` selects `diagnosis_service_io.dart` when `dart.library.io` is available.
-- `diagnosis_service_io.dart` loads the model with `Interpreter.fromAsset`.
-- Labels are read with `rootBundle.loadString`.
-- The selected image bytes are decoded with the `image` package.
-- The image is resized to `320x320`.
-- Pixels are normalized to RGB float values in the range `0.0..1.0`.
-- Inference runs with `runForMultipleInputs`.
-- The service expects SSD-style outputs: scores, boxes, number of detections, and classes.
-- Detections below the selected confidence threshold are discarded.
-- Results are sorted by confidence.
-- `moniliasisDetected` is true when any accepted label contains `monilia`.
+- `lib/services/diagnosis_service.dart` selecciona `diagnosis_service_io.dart` cuando `dart.library.io` está disponible.
+- `diagnosis_service_io.dart` carga el modelo con `Interpreter.fromAsset`.
+- Las etiquetas se leen con `rootBundle.loadString`.
+- Los bytes de la imagen seleccionada se decodifican con el paquete `image`.
+- La imagen se redimensiona a `320x320`.
+- Los pixeles se normalizan como valores RGB flotantes en el rango `0.0..1.0`.
+- La inferencia se ejecuta con `runForMultipleInputs`.
+- El servicio espera salidas tipo SSD: puntajes, cajas, número de detecciones y clases.
+- Las detecciones por debajo del umbral de confianza seleccionado se descartan.
+- Los resultados se ordenan por confianza.
+- `moniliasisDetected` es verdadero cuando alguna etiqueta aceptada contiene `monilia`.
 
-The offline UI exposes confidence threshold control. IoU is shown but disabled in offline mode because post-processing/NMS is handled inside the TFLite model output path used by the app.
+La UI offline expone control del umbral de confianza. IoU se muestra pero está deshabilitado en modo offline porque el postprocesamiento/NMS queda dentro del flujo de salida TFLite usado por la app.
 
-### Web Offline Pipeline
+### Pipeline offline web
 
-The web fallback loads model bytes from Flutter assets, then delegates execution to `globalThis.CacaoScanTflite` in `web/tflite_web_runner.js`.
+El fallback web carga los bytes del modelo desde los assets de Flutter y delega la ejecución a `globalThis.CacaoScanTflite` en `web/tflite_web_runner.js`.
 
-That runner:
+Ese runner:
 
-- loads `@tensorflow/tfjs-tflite`;
-- creates a single-thread TFLite model instance;
-- decodes image bytes in the browser;
-- draws the image into a `320x320` canvas;
-- builds a float RGB tensor;
-- reads model output tensors;
-- identifies SSD boxes, classes, scores, and detection count;
-- applies the confidence threshold and returns sorted detection objects to Dart.
+- carga `@tensorflow/tfjs-tflite`;
+- crea una instancia TFLite de un solo hilo;
+- decodifica los bytes de la imagen en el navegador;
+- dibuja la imagen en un canvas de `320x320`;
+- construye un tensor RGB flotante;
+- lee los tensores de salida del modelo;
+- identifica cajas SSD, clases, puntajes y cantidad de detecciones;
+- aplica el umbral de confianza y devuelve a Dart detecciones ordenadas.
 
-### Online Pipeline
+### Pipeline online
 
-When the user enables online mode, `DiagnosisService` calls the Hugging Face Space at:
+Cuando el usuario activa el modo online, `DiagnosisService` llama al Space de Hugging Face en:
 
 ```text
 https://bdarquea-cocoa-diseases-localization.hf.space
 ```
 
-The flow is:
+El flujo es:
 
-1. Upload the selected image to `/upload` as multipart field `files`.
-2. Start prediction through `/call/predict`.
-3. Send the uploaded file descriptor plus confidence and IoU thresholds.
-4. Poll `/call/predict/{event_id}` for the Gradio event result.
-5. Resolve the returned file path or URL.
-6. Download the annotated image bytes.
-7. Display the annotated image in the result card.
+1. Subir la imagen seleccionada a `/upload` como campo multipart `files`.
+2. Iniciar la predicción mediante `/call/predict`.
+3. Enviar el descriptor del archivo subido junto con los umbrales de confianza e IoU.
+4. Consultar `/call/predict/{event_id}` para obtener el resultado del evento Gradio.
+5. Resolver la ruta o URL devuelta.
+6. Descargar los bytes de la imagen anotada.
+7. Mostrar la imagen anotada en la tarjeta de resultado.
 
-The online result does not parse structured detection boxes from the Space response; it displays the annotated image returned by the remote model.
+El resultado online no parsea cajas de detección estructuradas desde la respuesta del Space; muestra la imagen anotada devuelta por el modelo remoto.
 
-## Database
+## Base de datos
 
-SQLite is used on IO platforms through `sqflite`.
+SQLite se usa en plataformas IO mediante `sqflite`.
 
-| Property | Value |
+| Propiedad | Valor |
 | --- | --- |
-| Database name | `mydatabase.db` |
-| Version | `8` |
-| Table | `usuarios` |
+| Nombre de base de datos | `mydatabase.db` |
+| Versión | `8` |
+| Tabla | `usuarios` |
 
-Schema:
+Esquema:
 
 ```sql
 CREATE TABLE IF NOT EXISTS usuarios (
@@ -300,81 +300,81 @@ CREATE TABLE IF NOT EXISTS usuarios (
 );
 ```
 
-Database behavior:
+Comportamiento de base de datos:
 
-- `BasedatoHelper` is a singleton.
-- The database is opened lazily and cached for reuse.
-- The users table is created on create, upgrade, and open.
-- The default administrator is inserted with `ConflictAlgorithm.ignore`.
-- Login queries by `correo` and compares the SHA-256 hash of the submitted password.
-- The returned user object contains only `id`, `nombre`, and `correo`.
+- `BasedatoHelper` es un singleton.
+- La base se abre de forma diferida y se cachea para reutilización.
+- La tabla de usuarios se crea en create, upgrade y open.
+- El administrador por defecto se inserta con `ConflictAlgorithm.ignore`.
+- El login consulta por `correo` y compara el hash SHA-256 de la contraseña enviada.
+- El objeto de usuario retornado contiene solo `id`, `nombre` y `correo`.
 
-Session persistence is separate from SQLite. `AuthProvider` stores `isAuthenticated`, `userEmail`, `userId`, and `userName` in `shared_preferences`.
+La persistencia de sesión está separada de SQLite. `AuthProvider` guarda `isAuthenticated`, `userEmail`, `userId` y `userName` en `shared_preferences`.
 
-## Build Configuration
+## Configuración de build
 
-| Platform | Current configuration |
+| Plataforma | Configuración actual |
 | --- | --- |
-| Android | Kotlin Gradle plugin `2.1.0`, Android Gradle plugin `8.9.1`, Gradle `8.12`, Java `11`, package namespace `com.example.cacaoscan`. |
-| iOS | CocoaPods with `use_frameworks!`, minimum platform `13.0`. |
-| Web | Manifest configured as standalone PWA named `CacaoScan`; TFLite web dependencies loaded from jsDelivr. |
-| Analysis | Uses `package:flutter_lints/flutter.yaml` and excludes `third_party/**`. |
-| CI | Manual GitHub Actions workflow builds an unsigned iOS IPA and uploads it as an artifact. |
+| Android | Kotlin Gradle plugin `2.1.0`, Android Gradle plugin `8.9.1`, Gradle `8.12`, Java `11`, namespace `com.example.cacaoscan`. |
+| iOS | CocoaPods con `use_frameworks!`, plataforma mínima `13.0`. |
+| Web | Manifest configurado como PWA standalone llamada `CacaoScan`; dependencias TFLite web cargadas desde jsDelivr. |
+| Análisis | Usa `package:flutter_lints/flutter.yaml` y excluye `third_party/**`. |
+| CI | Workflow manual de GitHub Actions que compila un IPA iOS sin firma y lo sube como artefacto. |
 
-The Android release build currently signs with the debug signing config, matching the default Flutter template behavior in this repository.
+El build release de Android actualmente firma con la configuración debug, siguiendo el comportamiento del template Flutter presente en este repositorio.
 
-## Code Quality
+## Calidad de código
 
-The application has a clear separation between UI, state, data access, image acquisition, and diagnosis services:
+La aplicación separa con claridad UI, estado, acceso a datos, adquisición de imágenes y servicios de diagnóstico:
 
-- UI widgets do not directly query SQLite or call remote endpoints.
-- Authentication state is centralized in `AuthProvider`.
-- Platform-specific database and diagnosis behavior is isolated through conditional exports.
-- Model result data is represented with `DiagnosisResult` and `DetectionBox`.
-- The diagnosis screen owns transient UI state such as selected image, active mode, thresholds, loading states, errors, and latest result.
-- Linting is configured with Flutter's recommended lint set.
+- Los widgets de UI no consultan SQLite ni llaman endpoints remotos directamente.
+- El estado de autenticación está centralizado en `AuthProvider`.
+- El comportamiento específico de plataforma para base de datos y diagnóstico se aísla mediante exports condicionales.
+- Los datos de resultado del modelo se representan con `DiagnosisResult` y `DetectionBox`.
+- La pantalla de diagnóstico administra estado transitorio de UI como imagen seleccionada, modo activo, umbrales, estados de carga, errores y último resultado.
+- El linting está configurado con el set recomendado de Flutter.
 
-Areas that are intentionally simple today:
+Áreas que hoy son intencionalmente simples:
 
-- There is no custom router.
-- There are no domain model files beyond the result classes embedded in the diagnosis service.
-- There are no automated tests in the repository.
-- There is no production account provisioning flow.
+- No hay router personalizado.
+- No hay modelos de dominio separados más allá de las clases de resultado embebidas en el servicio de diagnóstico.
+- No hay tests automatizados en el repositorio.
+- No hay flujo de aprovisionamiento de cuentas de producción.
 
-## Performance
+## Rendimiento
 
-Observed performance considerations in the implementation:
+Consideraciones de rendimiento observadas en la implementación:
 
-- The native TFLite interpreter and labels are loaded once and reused until `DiagnosisService.dispose`.
-- Selected images are downscaled by `image_picker` before inference, reducing memory pressure.
-- Offline native preprocessing resizes images to `320x320`, matching the model input size used by the service.
-- Offline native preprocessing builds nested Dart lists, which is simple but may allocate heavily for repeated analyses.
-- The web runner caches the model promise to avoid loading the TFLite model repeatedly.
-- Online diagnosis uses a 90-second timeout for upload, prediction, polling, and annotated image download.
-- Online mode depends on remote service availability and network latency.
+- El intérprete TFLite nativo y las etiquetas se cargan una sola vez y se reutilizan hasta `DiagnosisService.dispose`.
+- Las imágenes seleccionadas se reducen con `image_picker` antes de la inferencia, disminuyendo presión de memoria.
+- El preprocesamiento offline nativo redimensiona imágenes a `320x320`, alineado con el tamaño de entrada usado por el servicio.
+- El preprocesamiento offline nativo construye listas Dart anidadas; es simple, pero puede generar muchas asignaciones en análisis repetidos.
+- El runner web cachea la promesa del modelo para evitar cargar TFLite repetidamente.
+- El diagnóstico online usa timeout de 90 segundos para subida, predicción, polling y descarga de imagen anotada.
+- El modo online depende de disponibilidad del servicio remoto y latencia de red.
 
-## Security
+## Seguridad
 
-Current security properties:
+Propiedades actuales de seguridad:
 
-- Native local passwords are stored as SHA-256 hashes instead of plaintext.
-- Login error messages do not reveal whether the email or password was incorrect.
-- Authenticated session metadata is stored locally with `shared_preferences`.
-- Online mode uploads the selected image to a third-party Hugging Face Space.
-- Android requests camera, internet, and image storage/media permissions.
-- iOS declares camera and photo library usage descriptions.
+- En nativo, las contraseñas locales se almacenan como hashes SHA-256 en lugar de texto plano.
+- Los errores de login no revelan si falló el correo o la contraseña.
+- Los metadatos de sesión autenticada se almacenan localmente con `shared_preferences`.
+- El modo online sube la imagen seleccionada a un Space de Hugging Face de terceros.
+- Android solicita permisos de cámara, internet y acceso a almacenamiento/media de imágenes.
+- iOS declara descripciones de uso para cámara y biblioteca de fotos.
 
-Important limitations:
+Limitaciones importantes:
 
-- The default development account is hard-coded and should not be used in production.
-- Plain SHA-256 without a per-user salt or adaptive password hashing is not sufficient for production authentication.
-- `shared_preferences` is not secure storage.
-- The project does not currently include encryption, biometric auth, server-side auth, or role management.
-- The remote Space endpoint is hard-coded in the diagnosis service.
+- La cuenta de desarrollo por defecto está hardcodeada y no debe usarse en producción.
+- SHA-256 simple, sin salt por usuario ni hashing adaptativo, no es suficiente para autenticación de producción.
+- `shared_preferences` no es almacenamiento seguro.
+- El proyecto no incluye cifrado, autenticación biométrica, autenticación de servidor ni manejo de roles.
+- El endpoint remoto del Space está hardcodeado en el servicio de diagnóstico.
 
-## Testing and Validation
+## Pruebas y validación
 
-Recommended local checks:
+Comandos locales recomendados:
 
 ```bash
 flutter pub get
@@ -382,51 +382,51 @@ flutter analyze
 flutter test
 ```
 
-At the time of this README rewrite, no `test/` directory exists. `flutter test` is still useful as a guard because it verifies that the Flutter test harness can compile the project.
+Al momento de esta reescritura del README, no existe directorio `test/`. `flutter test` sigue siendo útil como guardia cuando se agreguen pruebas, pero actualmente fallará por ausencia de ese directorio.
 
-## Future Improvements
+## Mejoras futuras
 
-Realistic next steps based on the current architecture:
+Próximos pasos realistas según la arquitectura actual:
 
-- Replace the default account with a proper user provisioning flow.
-- Move secrets, endpoints, and build-time environment choices into configuration.
-- Add widget tests for login validation, auth routing, and diagnosis screen states.
-- Add unit tests for `AuthProvider`, database login behavior, label parsing, and Hugging Face response parsing.
-- Introduce secure storage for session data if the app handles sensitive accounts.
-- Optimize offline preprocessing with typed buffers to reduce allocations.
-- Add structured parsing for online detections if the remote model can return boxes and labels as JSON.
-- Add model metadata documentation: training dataset, evaluation metrics, input/output tensor contract, and versioning.
-- Replace Android debug signing in release builds with a production signing configuration.
-- Align or remove the CI `GoogleService-Info.plist` check unless Firebase is intentionally added.
-- Add a repository license and contribution policy files.
+- Reemplazar la cuenta por defecto con un flujo real de aprovisionamiento de usuarios.
+- Mover secretos, endpoints y decisiones de entorno/build a configuración.
+- Agregar widget tests para validación de login, ruteo de autenticación y estados de la pantalla de diagnóstico.
+- Agregar unit tests para `AuthProvider`, login contra base local, parseo de etiquetas y parseo de respuestas de Hugging Face.
+- Introducir almacenamiento seguro para datos de sesión si la app maneja cuentas sensibles.
+- Optimizar el preprocesamiento offline con buffers tipados para reducir asignaciones.
+- Agregar parseo estructurado de detecciones online si el modelo remoto puede devolver cajas y etiquetas como JSON.
+- Documentar metadatos del modelo: dataset de entrenamiento, métricas de evaluación, contrato de tensores de entrada/salida y versionado.
+- Reemplazar la firma debug de Android en builds release con una configuración de firma de producción.
+- Alinear o eliminar el check de CI para `GoogleService-Info.plist` si Firebase no se agrega intencionalmente.
+- Agregar una licencia y archivos de política de contribución al repositorio.
 
-## Contributing
+## Contribución
 
-Contributions should keep the implementation consistent with the current layering:
+Las contribuciones deben mantener la implementación consistente con las capas actuales:
 
-1. Keep UI concerns in `lib/View`.
-2. Keep shared state in providers.
-3. Keep image acquisition and inference behavior in services.
-4. Keep platform-specific code behind conditional exports where possible.
-5. Do not document features that are not implemented.
-6. Run `flutter analyze` before opening a pull request.
-7. Add focused tests when changing authentication, persistence, inference parsing, or platform-specific behavior.
+1. Mantener la UI en `lib/View`.
+2. Mantener estado compartido en providers.
+3. Mantener adquisición de imágenes e inferencia en servicios.
+4. Mantener código específico de plataforma detrás de exports condicionales cuando sea posible.
+5. No documentar funcionalidades que no estén implementadas.
+6. Ejecutar `flutter analyze` antes de abrir un pull request.
+7. Agregar pruebas enfocadas al cambiar autenticación, persistencia, parseo de inferencia o comportamiento específico de plataforma.
 
-Suggested pull request checklist:
+Checklist sugerido para pull requests:
 
-- [ ] The change is scoped and described clearly.
-- [ ] User-facing behavior is documented when it changes.
-- [ ] New assets are declared in `pubspec.yaml` if needed.
-- [ ] Platform permissions are updated when new device capabilities are used.
-- [ ] `flutter analyze` passes.
-- [ ] Relevant tests are added or updated.
+- [ ] El cambio está acotado y descrito claramente.
+- [ ] El comportamiento visible para el usuario está documentado cuando cambia.
+- [ ] Los assets nuevos están declarados en `pubspec.yaml` si corresponde.
+- [ ] Los permisos de plataforma se actualizan cuando se usan nuevas capacidades del dispositivo.
+- [ ] `flutter analyze` pasa.
+- [ ] Las pruebas relevantes se agregan o actualizan.
 
-## License
+## Licencia
 
-No license file is currently present in this repository. Add a license before publishing the project as open source. MIT, Apache-2.0, and BSD-3-Clause are common choices for Flutter applications; choose the one that matches the intended distribution and contribution model.
+Actualmente no existe un archivo de licencia en este repositorio. Agrega una licencia antes de publicar el proyecto como open source. MIT, Apache-2.0 y BSD-3-Clause son opciones comunes para aplicaciones Flutter; elige la que corresponda al modelo de distribución y contribución previsto.
 
-## Author
+## Autor
 
-Maintained by **Fran Vasquez**.
+Mantenido por **Fran Vasquez**.
 
-For academic, field, or production use, include model provenance, validation data, and deployment constraints alongside this repository so users can understand the diagnostic limitations of the application.
+Para uso académico, de campo o producción, acompaña este repositorio con procedencia del modelo, datos de validación y restricciones de despliegue para que los usuarios entiendan las limitaciones diagnósticas de la aplicación.
